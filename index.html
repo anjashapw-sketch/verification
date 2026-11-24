@@ -4,7 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TG Store - Device Verification</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fingerprintjs2@2.1.4/dist/fingerprint2.min.js"></script>
+  <!-- Using modern FingerprintJS v4 from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.umd.min.js"></script>
   <style>
     body { font-family: system-ui; background: #f5f5f7; margin: 0; padding: 20px; }
     .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); max-width: 400px; margin: 0 auto; }
@@ -14,35 +15,42 @@
     .status.ok { background: #e8f5e9; }
     .hash { font-family: monospace; background: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 13px; word-break: break-all; }
     .btn { background: #0088cc; color: white; border: none; border-radius: 10px; padding: 14px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .error-msg { color: #dc3545; font-size: 14px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="card">
+    <!-- Loading State -->
     <div id="loading">
       <div class="spinner"></div>
       <h2 style="text-align:center; margin:0 0 8px;">Verifying Device</h2>
       <p style="text-align:center; color:#666; margin:0;">Please wait - this takes 3-5 seconds</p>
       <div id="progress" style="margin-top:20px;">
-        <div class="status"><span>Canvas</span> fingerprint...</div>
-        <div class="status"><span>WebGL</span> fingerprint...</div>
-        <div class="status"><span>Audio</span> fingerprint...</div>
-        <div class="status"><span>Hardware</span> info...</div>
+        <div class="status" id="s-canvas"><span>Canvas</span> fingerprint...</div>
+        <div class="status" id="s-webgl"><span>WebGL</span> fingerprint...</div>
+        <div class="status" id="s-audio"><span>Audio</span> fingerprint...</div>
+        <div class="status" id="s-hardware"><span>Hardware</span> info...</div>
       </div>
+      <div id="loadError" class="error-msg hidden"></div>
     </div>
 
-    <div id="success" style="display:none;">
+    <!-- Success State -->
+    <div id="success" class="hidden">
       <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px;">Done</div>
+        <div style="font-size:48px;">✓</div>
         <h2 style="margin:10px 0;">Verification Complete</h2>
       </div>
       <div class="hash" id="hashDisplay"></div>
       <div style="margin-top:16px; font-size:13px; color:#666;">Verified: <span id="timeDisplay"></span></div>
-      <button class="btn" onclick="sendToBot()">Sending to Bot</button>
+      <button class="btn" id="sendBtn" onclick="sendToBot()">Sending to Bot...</button>
     </div>
 
-    <div id="error" style="display:none;">
+    <!-- Error State (Device Already Registered) -->
+    <div id="error" class="hidden">
       <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px;">Error</div>
+        <div style="font-size:48px;">⚠</div>
         <h2 style="margin:10px 0; color:#dc3545;">Device Already Registered</h2>
       </div>
       <div style="background:#fff0f0; border:1px solid #ffcccc; border-radius:10px; padding:16px; margin-bottom:16px;">
@@ -55,27 +63,209 @@
   </div>
 
   <script>
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
+    // Initialize Telegram Web App
+    if (window.Telegram && window.Telegram.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+    }
 
-    new Fingerprint2().get(function(result, components) {
-      const hash = result;
-      const details = components.map(c => c.key + ": " + c.value).join("\n");
+    // DOM Elements
+    const loadingEl = document.getElementById('loading');
+    const successEl = document.getElementById('success');
+    const errorEl = document.getElementById('error');
+    const loadErrorEl = document.getElementById('loadError');
+    const sendBtn = document.getElementById('sendBtn');
+    const hashDisplay = document.getElementById('hashDisplay');
+    const timeDisplay = document.getElementById('timeDisplay');
+    
+    // Status elements
+    const statusEls = {
+      canvas: document.getElementById('s-canvas'),
+      webgl: document.getElementById('s-webgl'),
+      audio: document.getElementById('s-audio'),
+      hardware: document.getElementById('s-hardware')
+    };
 
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("success").style.display = "block";
-      document.getElementById("hashDisplay").textContent = "Device ID: " + hash;
-      document.getElementById("timeDisplay").textContent = new Date().toLocaleString("en-IN", {timeZone:"Asia/Kolkata"});
+    let fingerprintHash = null;
+    let componentsData = '';
+    let dataSent = false;
 
-      Telegram.WebApp.sendData(JSON.stringify({
-        fingerprint_hash: hash,
-        components: details,
+    // Update status UI
+    function updateStatus(key, text, isOk = false) {
+      const el = statusEls[key];
+      if (el) {
+        el.innerHTML = `<span>${key.charAt(0).toUpperCase() + key.slice(1)}</span> ${text}`;
+        if (isOk) el.classList.add('ok');
+      }
+    }
+
+    // Show error in loading screen
+    function showLoadError(msg) {
+      loadErrorEl.textContent = msg;
+      loadErrorEl.classList.remove('hidden');
+    }
+
+    // Switch views
+    function showView(view) {
+      loadingEl.classList.toggle('hidden', view !== 'loading');
+      successEl.classList.toggle('hidden', view !== 'success');
+      errorEl.classList.toggle('hidden', view !== 'error');
+    }
+
+    // Generate fallback fingerprint if FingerprintJS fails
+    async function generateFallbackFingerprint() {
+      updateStatus('canvas', 'generating fallback...');
+      
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 200;
+      canvas.height = 50;
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('Device fingerprint: ' + navigator.userAgent.slice(0, 50), 2, 2);
+      
+      const canvasFp = canvas.toDataURL();
+      
+      const components = [
+        'ua:' + navigator.userAgent,
+        'lang:' + navigator.language,
+        'platform:' + navigator.platform,
+        'cores:' + (navigator.hardwareConcurrency || 'unknown'),
+        'mem:' + (navigator.deviceMemory || 'unknown'),
+        'screen:' + screen.width + 'x' + screen.height,
+        'colorDepth:' + screen.colorDepth,
+        'tz:' + Intl.DateTimeFormat().resolvedOptions().timeZone,
+        'canvas:' + canvasFp.slice(0, 50)
+      ];
+      
+      // Simple hash function
+      let hash = 0;
+      const str = components.join('|');
+      for (let i = 0; i < str.length; i++) {
+        const chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+      }
+      
+      fingerprintHash = Math.abs(hash).toString(16).padStart(8, '0') + 
+                        Math.abs(hash * 31).toString(16).padStart(8, '0') +
+                        Math.abs(hash * 313).toString(16).padStart(8, '0') +
+                        Math.abs(hash * 3131).toString(16).padStart(8, '0');
+      
+      componentsData = components.join('\n');
+      updateStatus('canvas', 'done', true);
+      updateStatus('webgl', 'done', true);
+      updateStatus('audio', 'done', true);
+      updateStatus('hardware', 'done', true);
+      
+      return fingerprintHash;
+    }
+
+    // Main fingerprinting function
+    async function generateFingerprint() {
+      try {
+        // Check if FingerprintJS loaded
+        if (typeof FingerprintJS === 'undefined') {
+          throw new Error('FingerprintJS library not loaded');
+        }
+
+        updateStatus('canvas', 'loading FingerprintJS...');
+        
+        // Load FingerprintJS agent
+        const fpPromise = FingerprintJS.load({
+          cache: true,
+          timeout: 10000
+        });
+        
+        updateStatus('canvas', 'initializing...', true);
+        const fp = await fpPromise;
+        
+        updateStatus('webgl', 'collecting WebGL...');
+        updateStatus('audio', 'collecting Audio...');
+        updateStatus('hardware', 'collecting Hardware...');
+        
+        // Get visitor identifier
+        const result = await fp.get();
+        
+        fingerprintHash = result.visitorId;
+        componentsData = result.components.map(c => `${c.key}: ${c.value}`).join('\n');
+        
+        updateStatus('canvas', 'done', true);
+        updateStatus('webgl', 'done', true);
+        updateStatus('audio', 'done', true);
+        updateStatus('hardware', 'done', true);
+        
+        return fingerprintHash;
+        
+      } catch (err) {
+        console.warn('FingerprintJS failed, using fallback:', err);
+        showLoadError('Primary method failed, using fallback...');
+        return await generateFallbackFingerprint();
+      }
+    }
+
+    // Send data to bot
+    function sendToBot() {
+      if (dataSent || !fingerprintHash) return;
+      
+      dataSent = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending to Bot...';
+      
+      const payload = {
+        fingerprint_hash: fingerprintHash,
+        components: componentsData,
         timestamp: Date.now(),
         user_agent: navigator.userAgent
-      }));
+      };
+      
+      try {
+        if (window.Telegram && window.Telegram.WebApp) {
+          Telegram.WebApp.sendData(JSON.stringify(payload));
+          
+          // Give bot time to process before closing
+          setTimeout(() => {
+            Telegram.WebApp.close();
+          }, 2000);
+        } else {
+          throw new Error('Telegram WebApp not available');
+        }
+      } catch (err) {
+        console.error('Send failed:', err);
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Retry';
+        dataSent = false;
+        alert('Failed to send data. Please try again.');
+      }
+    }
 
-      setTimeout(function() { Telegram.WebApp.close(); }, 1500);
-    });
+    // Initialize
+    async function init() {
+      // Small delay to let UI render
+      await new Promise(r => setTimeout(r, 100));
+      
+      try {
+        const hash = await generateFingerprint();
+        
+        if (!hash) {
+          throw new Error('Failed to generate fingerprint');
+        }
+        
+        showView('success');
+        hashDisplay.textContent = 'Device ID: ' + hash;
+        timeDisplay.textContent = new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'});
+        sendBtn.textContent = 'Continue to Bot';
+        sendBtn.disabled = false;
+        
+      } catch (err) {
+        console.error('Init failed:', err);
+        showView('loading');
+        showLoadError('Verification failed: ' + err.message + '. Please refresh and try again.');
+      }
+    }
+
+    // Start
+    init();
   </script>
 </body>
 </html>
