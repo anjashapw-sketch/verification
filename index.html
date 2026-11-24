@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TG Store - Device Verification</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fingerprintjs2@2.1.4/dist/fingerprint2.min.js"></script>
+  <style>
+    body { font-family: system-ui; background: #f5f5f7; margin: 0; padding: 20px; }
+    .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); max-width: 400px; margin: 0 auto; }
+    .spinner { border: 3px solid #e0e0e0; border-top-color: #0088cc; border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status { display: flex; align-items: center; gap: 10px; padding: 10px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; }
+    .status.ok { background: #e8f5e9; }
+    .hash { font-family: monospace; background: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 13px; word-break: break-all; }
+    .btn { background: #0088cc; color: white; border: none; border-radius: 10px; padding: 14px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="loading">
+      <div class="spinner"></div>
+      <h2 style="text-align:center; margin:0 0 8px;">Verifying Device</h2>
+      <p style="text-align:center; color:#666; margin:0;">Please wait - this takes 3-5 seconds</p>
+      <div id="progress" style="margin-top:20px;">
+        <div class="status"><span>Canvas</span> fingerprint...</div>
+        <div class="status"><span>WebGL</span> fingerprint...</div>
+        <div class="status"><span>Audio</span> fingerprint...</div>
+        <div class="status"><span>Hardware</span> info...</div>
+      </div>
+    </div>
+
+    <div id="success" style="display:none;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:48px;">Done</div>
+        <h2 style="margin:10px 0;">Verification Complete</h2>
+      </div>
+      <div class="hash" id="hashDisplay"></div>
+      <div style="margin-top:16px; font-size:13px; color:#666;">Verified: <span id="timeDisplay"></span></div>
+      <button class="btn" onclick="sendToBot()">Sending to Bot</button>
+    </div>
+
+    <div id="error" style="display:none;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:48px;">Error</div>
+        <h2 style="margin:10px 0; color:#dc3545;">Device Already Registered</h2>
+      </div>
+      <div style="background:#fff0f0; border:1px solid #ffcccc; border-radius:10px; padding:16px; margin-bottom:16px;">
+        <p style="margin:0 0 8px;"><b>First User:</b> <span id="firstUser"></span></p>
+        <p style="margin:0 0 8px;"><b>Registered:</b> <span id="firstDate"></span></p>
+        <p style="margin:0; color:#dc3545;"><b>Referral reward not available on this device</b></p>
+      </div>
+      <button class="btn" style="background:#6c757d;" onclick="Telegram.WebApp.close()">Go to Bot (No Bonus)</button>
+    </div>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    new Fingerprint2().get(function(result, components) {
+      const hash = result;
+      const details = components.map(c => c.key + ": " + c.value).join("\n");
+
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("success").style.display = "block";
+      document.getElementById("hashDisplay").textContent = "Device ID: " + hash;
+      document.getElementById("timeDisplay").textContent = new Date().toLocaleString("en-IN", {timeZone:"Asia/Kolkata"});
+
+      Telegram.WebApp.sendData(JSON.stringify({
+        fingerprint_hash: hash,
+        components: details,
+        timestamp: Date.now(),
+        user_agent: navigator.userAgent
+      }));
+
+      setTimeout(function() { Telegram.WebApp.close(); }, 1500);
+    });
+  </script>
+</body>
+</html>
