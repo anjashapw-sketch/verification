@@ -252,7 +252,7 @@
             [['#f0f', 40, 50], ['#0ff', 70, 50], ['#ff0', 55, 30]].forEach(([col, x, y]) => {
                 c.fillStyle = col; c.beginPath(); c.arc(x + 150, y, 22, 0, 6.28); c.fill();
             });
-            return (await sha256(canvas.toDataURL())).slice(0, 32);
+            return canvas.toDataURL().slice(41, 73);
         } catch (e) { return 'na'; }
     }
 
@@ -313,7 +313,7 @@
             return list.map(f => base.some(b => {
                 x.font = "72px '" + f + "'," + b;
                 return x.measureText(text).width !== w[b];
-            }) ? '1' : '0').join('');
+            })).join('');
         } catch (e) { return 'na'; }
     }
 
@@ -405,11 +405,10 @@
             tg.sendData(JSON.stringify({
                 v: 2,
                 u: uid,
-                t: token,            // token from the link (bot validates this)
-                ts: String(Date.now()),
+                t: String(Date.now()),
                 s: sign,
                 d: did,
-                c: { cv: cv, au: au, fn: fn, gl_v: webgl.v, gl_r: webgl.r, gl_p: webgl.p }
+                c: { cv: cv, au: au, fn: fn }
             }));
 
             steps[2].classList.remove('active');
