@@ -1,155 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-    <meta name="description" content="Device verification for TG MANDI Account Store">
-    <meta name="author" content="TG MANDI Bot">
-    <title>Device Verification - TG MANDI</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Device Verification - TG MANDI</title>
 
-    <!-- Fonts with preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-
-    <!-- Critical CSS inline for above-the-fold rendering -->
-    <style>
-        :root {
-            --tg-theme-bg: #0b1220;
-            --tg-theme-text: #f0f4f8;
-            --tg-theme-hint: #8aa7c2;
-            --tg-theme-primary: #00d4aa;
-            --tg-theme-secondary: #63b3e8;
-            --tg-theme-accent: #ff6b6b;
-            --tg-card: rgba(17, 23, 35, 0.8);
-            --tg-border: rgba(255, 255, 255, 0.08);
-            --tg-success: #2ecc71;
-            --tg-error: #e74c3c;
-            --tg-warning: #f1c40f;
+<!-- Detection Script -->
+<script>
+    window.isTelegram = !!(window.Telegram && window.Telegram.WebApp);
+    const htmlTag = document.documentElement;
+    htmlTag.dataset.env = (() => {
+        try {
+            const q = new URLSearchParams(window.location.search);
+            return q.get('data') ? 'telegram' : 'direct';
+        } catch() {
+            return 'direct';
         }
+    })();
+</style>
 
-        /* Reduced motion for accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                transition: none !important;
-                animation: none !important;
-            }
-        }
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
-        /* ===== ROOT ENV FLAG ===== */
-        html[data-env="direct"]::before {
-            content: '📱';
-            position: fixed;
-            top: 20px; left: 20px;
-            background: var(--tg-error);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 9999;
-        }
-        
-        html[data-env="telegram"]::before {
-            content: '🔒';
-            position: fixed;
-            top: 20px; left: 20px;
-            background: var(--tg-success);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
+<!-- Critical CSS -->
+<style>
+    :root {
+        --tg-theme-bg: #0b1220;
+        --tg-theme-text: #f0f4f8;
+        --tg-theme-hint: #8aa7c2;
+        --tg-theme-primary: #00d4aa;
+        --tg-theme-secondary: #63b3e8;
+        --tg-theme-accent: #ff6b6b;
+        --tg-card: rgba(17, 23, 35, 0.8);
+        --tg-border: rgba(255, 255, 255, 0.08);
+        --tg-success: #2ecc71;
+        --tg-error: #e74c3c;
+        --tg-warning: #f1c40f;
+    }
 
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(0.95); }
-        }
+    html[data-env="direct"]::before {
+        content: '📱';
+        position: fixed; top: 20px; left: 20px;
+        background: var(--tg-error); color: white;
+        padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 9999;
+    }
+    
+    html[data-env="telegram"]::before {
+        content: '🔒';
+        position: fixed; top: 20px; left: 20px;
+        background: var(--tg-success); color: white;
+        padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 9999;
+    }
 
-        /* ===== NOISE TEXTURE ===== */
-        .noise-overlay {
-            position: fixed; inset: 0; pointer-events: none; z-index: 1;
-            background-image: url("data:image/svg+xml,<svg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'><filter id='noise'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/></filter><rect width='256' height='256' filter='url(#noise)'/></svg>");
-            opacity: 0.03; animation: noiseMove 15s linear infinite;
-        }
-        @keyframes noiseMove { 0% { transform: translate(0, 0); } 100% { transform: translate(-1px, -1px); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(0.95); } }
 
-        /* ===== MAIN CONTAINER ===== */
-        .app-container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 24px; width: 100%; max-width: 440px; }
+    .noise-overlay {
+        position: fixed; inset: 0; pointer-events: none; z-index: 1;
+        background-image: url("data:image/svg+xml,<svg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'><filter id='noise'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/></filter><rect width='256' height='256' filter='url(#noise)'/></svg>");
+        opacity: 0.03; animation: noiseMove 15s linear infinite;
+    }
+    @keyframes noiseMove { 0% { transform: translate(0, 0); } 100% { transform: translate(-1px, -1px); } }
 
-        /* ===== CARD ===== */
-        .card { background: var(--tg-card); border: 1px solid var(--tg-border); border-radius: 24px; padding: 40px 32px; position: relative; z-index: 2; backdrop-filter: blur(20px); transition: all 0.3s ease; animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes cardIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .card:hover { border-color: rgba(0, 212, 170, 0.3); transform: translateY(-2px); }
-        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--tg-primary), transparent); opacity: 0; transition: opacity 0.3s; }
-        .card:hover::before { opacity: 0.5; }
+    .app-container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 24px; width: 100%; max-width: 440px; }
+    .card { background: var(--tg-card); border: 1px solid var(--tg-border); border-radius: 24px; padding: 40px 32px; position: relative; z-index: 2; backdrop-filter: blur(20px); transition: all 0.3s ease; animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .card:hover { border-color: rgba(0, 212, 170, 0.3); transform: translateY(-2px); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--tg-primary), transparent); opacity: 0; transition: opacity 0.3s; }
+    .card:hover::before { opacity: 0.5; }
 
-        /* ===== HEADER ===== */
-        .header { text-align: center; margin-bottom: 32px; }
-        .shield-icon { width: 56px; height: 56px; margin: 0 auto 16px; display: block; background: linear-gradient(135deg, var(--tg-primary), var(--tg-secondary)); border-radius: 16px; position: relative; }
-        .shield-icon::before { content: ''; position: absolute; top: 8px; left: 8px; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 8px; }
-        .shield-icon svg { width: 32px; height: 32px; position: relative; z-index: 1; }
-        .header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
-        .header p { color: var(--tg-theme-hint); font-size: 13px; letter-spacing: 0.02em; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .shield-icon { width: 56px; height: 56px; margin: 0 auto 16px; display: block; background: linear-gradient(135deg, var(--tg-primary), var(--tg-secondary)); border-radius: 16px; position: relative; }
+    .shield-icon::before { content: ''; position: absolute; top: 8px; left: 8px; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 8px; }
+    .shield-icon svg { width: 32px; height: 32px; position: relative; z-index: 1; }
+    .header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .header p { color: var(--tg-theme-hint); font-size: 13px; letter-spacing: 0.02em; }
 
-        /* ===== STEPS INDICATOR ===== */
-        .steps-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-        .step { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 2px solid var(--tg-border); color: var(--tg-theme-hint); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: default; transition: all 0.2s ease; position: relative; }
-        .step.active { background: var(--tg-primary); color: #0b1220; border-color: var(--tg-primary); box-shadow: 0 0 15px rgba(0, 212, 170, 0.3); }
-        .step.completed { background: var(--tg-primary); color: #0b1220; border-color: var(--tg-primary); }
-        .step:hover:not(.active):not(.completed) { border-color: var(--tg-hint); color: var(--tg-hint); }
-        .step-number { font-size: 14px; font-weight: 700; }
-        .step-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .steps-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .step { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 2px solid var(--tg-border); color: var(--tg-theme-hint); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: default; transition: all 0.2s ease; position: relative; }
+    .step.active { background: var(--tg-primary); color: #0b1220; border-color: var(--tg-primary); box-shadow: 0 0 15px rgba(0, 212, 170, 0.3); }
+    .step.completed { background: var(--tg-primary); color: #0b1220; border-color: var(--tg-primary); }
+    .step:hover:not(.active):not(.completed) { border-color: var(--tg-hint); color: var(--tg-hint); }
+    .step-number { font-size: 14px; font-weight: 700; }
+    .step-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* ===== PROGRESS BAR ===== */
-        .progress-bar { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--tg-primary), var(--tg-secondary)); border-radius: 3px; width: 0%; transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
-        .progress-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: var(--tg-primary); border-radius: 50%; box-shadow: 0 0 10px var(--tg-primary); animation: pulse 2s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .progress-bar { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--tg-primary), var(--tg-secondary)); border-radius: 3px; width: 0%; transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+    .progress-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: var(--tg-primary); border-radius: 50%; box-shadow: 0 0 10px var(--tg-primary); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* ===== STEP DETAILS ===== */
-        .step-details { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--tg-border); }
-        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 12px; color: var(--tg-theme-hint); border-bottom: 1px solid var(--tg-border); }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { color: var(--tg-theme-hint); }
-        .detail-value { color: var(--tg-theme-text); font-family: 'Space Grotesk', monospace; }
+    .step-details { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--tg-border); }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 12px; color: var(--tg-theme-hint); border-bottom: 1px solid var(--tg-border); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--tg-theme-hint); }
+    .detail-value { color: var(--tg-theme-text); font-family: 'Space Grotesk', monospace; }
 
-        /* ===== BUTTONS ===== */
-        .btn { width: 100%; padding: 14px 24px; border: none; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-top: 12px; position: relative; overflow: hidden; }
-        .btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent); opacity: 0; transition: opacity 0.3s; }
-        .btn:hover::before { opacity: 1; }
-        .btn:focus-visible { outline: 2px solid var(--tg-primary); outline-offset: 4px; }
-        .btn:active { transform: scale(0.98); }
-        .btn-primary { background: var(--tg-primary); color: #0b1220; }
-        .btn-primary:hover { box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4); transform: translateY(-1px); }
-        .btn-secondary { background: transparent; color: var(--tg-theme-text); border: 1px solid var(--tg-border); }
-        .btn-secondary:hover { border-color: var(--tg-primary); color: var(--tg-primary); }
-        .btn-danger { background: var(--tg-error); color: #fff; }
-        .btn-danger:hover { box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4); }
+    .btn { width: 100%; padding: 14px 24px; border: none; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; margin-top: 12px; position: relative; overflow: hidden; }
+    .btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent); opacity: 0; transition: opacity 0.3s; }
+    .btn:hover::before { opacity: 1; }
+    .btn:focus-visible { outline: 2px solid var(--tg-primary); outline-offset: 4px; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--tg-primary); color: #0b1220; }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4); transform: translateY(-1px); }
+    .btn-secondary { background: transparent; color: var(--tg-theme-text); border: 1px solid var(--tg-border); }
+    .btn-secondary:hover { border-color: var(--tg-primary); color: var(--tg-primary); }
+    .btn-danger { background: var(--tg-error); color: #fff; }
+    .btn-danger:hover { box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4); }
 
-        /* ===== STATUS DISPLAY ===== */
-        .status-display { padding: 16px; border-radius: 12px; margin: 16px 0; text-align: center; font-size: 14px; font-weight: 500; min-height: 20px; transition: all 0.3s ease; }
-        .status-ok { background: rgba(46, 204, 113, 0.1); border: 1px solid var(--tg-success); color: var(--tg-success); }
-        .status-error { background: rgba(231, 76, 60, 0.1); border: 1px solid var(--tg-error); color: var(--tg-error); }
-        .status-pending { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--tg-warning); color: var(--tg-warning); }
+    .status-display { padding: 16px; border-radius: 12px; margin: 16px 0; text-align: center; font-size: 14px; font-weight: 500; min-height: 20px; transition: all 0.3s ease; }
+    .status-ok { background: rgba(46, 204, 113, 0.1); border: 1px solid var(--tg-success); color: var(--tg-success); }
+    .status-error { background: rgba(231, 76, 60, 0.1); border: 1px solid var(--tg-error); color: var(--tg-error); }
+    .status-pending { background: rgba(241, 196, 15, 0.1); border: 1px solid var(--tg-warning); color: var(--tg-warning); }
 
-        /* ===== ANIMATED DOTS ===== */
-        .dot-animation { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--tg-primary); animation: dotBounce 1.4s ease-in-out infinite; }
-        .dot-animation:nth-child(2) { animation-delay: 0.2s; }
-        .dot-animation:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dotBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+    .dot-animation { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--tg-primary); animation: dotBounce 1.4s ease-in-out infinite; }
+    .dot-animation:nth-child(2) { animation-delay: 0.2s; }
+    .dot-animation:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 440px) { .card { padding: 32px 20px; } .header h1 { font-size: 20px; } .shield-icon { width: 48px; height: 48px; } .shield-icon svg { width: 28px; height: 28px; } }
-    </style>
+    @media (max-width: 440px) { .card { padding: 32px 20px; } .header h1 { font-size: 20px; } .shield-icon { width: 48px; height: 48px; } .shield-icon svg { width: 28px; height: 28px; } }
+</style>
 </head>
 <body>
-    <!-- Noise overlay -->
     <div class="noise-overlay"></div>
-
-    <!-- Background layers -->
     <div class="bg-layer layer-1"></div>
     <div class="bg-layer layer-2"></div>
-
-    <!-- App container -->
     <div class="app-container">
         <div class="card">
             <div class="header">
@@ -165,8 +141,6 @@
                 <h1>Device Verification</h1>
                 <p class="sub">Verifying your device for secure account access</p>
             </div>
-
-            <!-- Steps indicator -->
             <div class="steps-indicator">
                 <div class="step active" id="s0">
                     <span class="step-number">1</span>
@@ -181,50 +155,34 @@
                     <span class="step-label">Result</span>
                 </div>
             </div>
-
-            <!-- Progress bar -->
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress"></div>
-            </div>
-
-            <!-- Step details -->
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
             <div class="step-details" id="details">
                 <div class="detail-row">
                     <span class="detail-label">Step:</span>
                     <span class="detail-value" id="step-name">1 / 3</span>
                 </div>
             </div>
-
-            <!-- Status -->
             <div class="status-display" id="status" class="status-pending">
                 Starting verification...
             </div>
-
-            <!-- Steps -->
             <ul id="steps"></ul>
-
-            <!-- Button -->
             <button class="btn btn-primary" id="retry" style="display: none;">Try Again</button>
-
             <p class="note">No personal data is collected. Only device characteristics are read and hashed on the server.</p>
         </div>
     </div>
 
     <script>
-        // ===== INITIALISATION =====
         (function() {
             'use strict';
-
             const tg = window.Telegram && window.Telegram.WebApp;
             const qs = new URLSearchParams(location.search);
             const userId = qs.get('u');
             const token = qs.get('t');
             const sign = qs.get('s');
-
+            
             const $ = id => document.getElementById(id);
             const $$ = sel => document.querySelector(sel);
 
-            // Check if running from bot
             if (!tg || typeof tg.sendData !== 'function') {
                 document.body.innerHTML = `
                     <div style="font-family: system-ui, sans-serif; padding: 40px; text-align: center; color: #666;">
@@ -235,39 +193,30 @@
                 return;
             }
 
-            // Initialize Telegram
             tg.ready();
             tg.expand();
 
-            // Set user
             if (userId && token && sign) {
                 tg.initDataUnsafe.user = {
                     id: Number(userId),
                     username: '',
-                    first_name: '',
-                    last_name: ''
+                    first_name: ''
                 };
             }
 
-            // ===== ELEMENTS =====
             const steps = document.querySelectorAll('.step');
             const progressFill = $('#progress');
             const statusDisplay = $('#status');
             const retryBtn = $('retry');
             const stepsIndicator = document.querySelector('.steps-indicator');
 
-            // ===== DATA COLLECTION =====
             const collectionSteps = [
                 { name: 'Session', done: false, element: null },
                 { name: 'Device', done: false, element: null },
                 { name: 'Result', done: false, element: null }
             ];
 
-            // ===== ANIMATION HELPERS =====
-            function progressTo(percent) {
-                progressFill.style.width = percent + '%';
-            }
-
+            function progressTo(percent) { progressFill.style.width = percent + '%'; }
             function markStep(stepIndex, cls) {
                 steps.forEach((s, i) => {
                     s.classList.remove('active', 'completed');
@@ -275,33 +224,18 @@
                     if (i === stepIndex) s.classList.add('active');
                 });
                 progressTo(((stepIndex + 1) / steps.length) * 100);
-                document.querySelectorAll('.step-label')[stepIndex].textContent = 
-                    steps[stepIndex].dataset.label;
+                document.querySelectorAll('.step-label')[stepIndex].textContent = steps[stepIndex].dataset.label;
             }
+            function showStatus(msg, type) { statusDisplay.textContent = msg; statusDisplay.className = 'status-display ' + (type || 'status-pending'); }
+            function animateStep(stepIndex) { const step = steps[stepIndex]; step.style.animation = 'none'; step.offsetHeight; step.style.animation = 'none'; }
 
-            function showStatus(msg, type) {
-                statusDisplay.textContent = msg;
-                statusDisplay.className = 'status-display ' + (type || 'status-pending');
-            }
-
-            function animateStep(stepIndex) {
-                const step = steps[stepIndex];
-                step.style.animation = 'none';
-                step.offsetHeight; // trigger reflow
-                step.style.animation = 'none';
-            }
-
-            // ===== MAIN FLOW =====
             async function run() {
-                // Hide initial content
                 document.querySelectorAll('.step-details, .progress-bar, .btn-primary').forEach(el => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(10px)';
+                    el.style.opacity = '0'; el.style.transform = 'translateY(10px)';
                 });
                 statusDisplay.className = 'status-display status-pending';
                 statusDisplay.textContent = 'Starting verification...';
 
-                // Step 1: Session check
                 markStep(0, 'active');
                 steps[0].classList.add('active');
                 steps[0].classList.add('completed');
@@ -323,13 +257,10 @@
                 showStatus('Reading device characteristics...', 'status-pending');
                 progressTo(40);
 
-                // Step 2: Collect fingerprint data
                 const user = tg.initDataUnsafe.user;
 
-                // Canvas fingerprint
                 const canvas = document.createElement('canvas');
-                canvas.width = 260;
-                canvas.height = 70;
+                canvas.width = 260; canvas.height = 70;
                 const ctx = canvas.getContext('2d');
                 ctx.textBaseline = 'top';
                 ctx.fillStyle = '#f60';
@@ -345,9 +276,8 @@
                 });
 
                 const canvasDataUrl = canvas.toDataURL();
-                const canvasHash = canvasDataUrl.slice(41, 73); // first 32 chars of base64
+                const canvasHash = canvasDataUrl.slice(41, 73);
 
-                // WebGL renderer
                 const webglCanvas = document.createElement('canvas');
                 const webgl = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl');
                 let webglInfo = { v: 'na', r: 'na', p: 'na' };
@@ -360,37 +290,21 @@
                     };
                 }
 
-                // Audio fingerprint
                 let audioHash = 'na';
                 try {
                     const OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
                     if (OfflineAudioContext) {
                         const ctx = new OfflineAudioContext(1, 44100, 44100);
                         const osc = ctx.createOscillator();
-                        osc.type = 'triangle';
-                        osc.frequency.value = 10000;
+                        osc.type = 'triangle'; osc.frequency.value = 10000;
                         const comp = ctx.createDynamicsCompressor();
-                        comp.threshold.value = -50;
-                        comp.knee.value = 40;
-                        comp.ratio.value = 12;
-                        comp.attack.value = 0;
-                        comp.release.value = .25;
-                        osc.connect(comp);
-                        comp.connect(ctx.destination);
-                        osc.start(0);
+                        comp.threshold.value = -50; comp.knee.value = 40; comp.ratio.value = 12; comp.attack.value = 0; comp.release.value = .25;
+                        osc.connect(comp); comp.connect(ctx.destination); osc.start(0);
                         const buf = await ctx.startRendering();
-                        if (buf) {
-                            const data = buf.getChannelData(0);
-                            let sum = 0;
-                            for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]);
-                            audioHash = sum.toFixed(6);
-                        }
+                        if (buf) { const data = buf.getChannelData(0); let sum = 0; for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]); audioHash = sum.toFixed(6); }
                     }
-                } catch (e) {
-                    audioHash = 'na';
-                }
+                } catch (e) { audioHash = 'na'; }
 
-                // Fonts fingerprint
                 const fonts = (() => {
                     const base = ['monospace', 'sans-serif', 'serif'];
                     const list = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Roboto', 'Helvetica', 'Tahoma',
@@ -399,20 +313,12 @@
                     const t = 'mmmmmmmmmmlli';
                     const x = document.createElement('canvas').getContext('2d');
                     const w = {};
-                    base.forEach(b => {
-                        x.font = '72px ' + b;
-                        w[b] = x.measureText(t).width;
-                    });
-                    return list.map(f => base.some(b => {
-                        x.font = '72px \'' + f + '\',' + b;
-                        return x.measureText(t).width !== w[b];
-                    })).join('');
+                    base.forEach(b => { x.font = '72px ' + b; w[b] = x.measureText(t).width; });
+                    return list.map(f => base.some(b => { x.font = '72px \'' + f + '\',' + b; return x.measureText(t).width !== w[b]; })).join('');
                 })();
 
-                // Device ID generation
                 let deviceId = '';
                 try {
-                    // Try IndexedDB first
                     const idbPromise = new Promise(resolve => {
                         const req = indexedDB.open('tgm', 1);
                         req.onupgradeneeded = () => req.result.createObjectStore('k');
@@ -428,14 +334,11 @@
                     const cookieMatch = document.cookie.match(new RegExp('(?:^|; )tgm_did=([0-9a-f]{32})'));
                     const hasId = /^[0-9a-f]{32}$/.test(cookieMatch ? cookieMatch[1] : '');
 
-                    if (hasId) {
-                        deviceId = cookieMatch[1];
-                    } else {
-                        // Generate random
+                    if (hasId) { deviceId = cookieMatch[1]; }
+                    else {
                         const randomId = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
                         deviceId = randomId;
 
-                        // Save to IndexedDB
                         try {
                             const dbRequest = indexedDB.open('tgm', 1);
                             dbRequest.onupgradeneeded = () => dbRequest.result.createObjectStore('k');
@@ -445,113 +348,67 @@
                             };
                         } catch (e) {}
 
-                        // Save to cookie
-                        try {
-                            document.cookie = 'tgm_did=' + deviceId + '; max-age=315360000; path=/; SameSite=None; Secure';
-                        } catch (e) {}
+                        try { document.cookie = 'tgm_did=' + deviceId + '; max-age=315360000; path=/; SameSite=None; Secure'; } catch (e) {}
                     }
-                } catch (e) {
-                    deviceId = crypto.randomUUID().replace(/-/g, '').slice(0, 32);
-                }
+                } catch (e) { deviceId = crypto.randomUUID().replace(/-/g, '').slice(0, 32); }
 
-                // Collect all data
                 const fingerprintData = {
-                    cv: canvasHash,          // Canvas hash (32 chars)
-                    gl_v: webglInfo.v,        // WebGL vendor
-                    gl_r: webglInfo.r,        // WebGL renderer
-                    gl_p: webglInfo.p,        // WebGL parameters
-                    au: audioHash,            // Audio fingerprint
-                    fn: fonts,                // Fonts fingerprint
-                    u: String(user.id),       // User ID
-                    t: String(Date.now()),    // Timestamp
-                    s: sign,                  // Signature (from query)
-                    canvas: canvasDataUrl     // Full canvas data
+                    cv: canvasHash, gl_v: webglInfo.v, gl_r: webglInfo.r, gl_p: webglInfo.p,
+                    au: audioHash, fn: fonts, u: String(user.id), t: String(Date.now()),
+                    s: sign, canvas: canvasDataUrl
                 };
 
-                // Step 3: Send to bot
                 markStep(2, 'active');
                 steps[2].classList.add('active');
                 steps[2].classList.remove('completed');
                 showStatus('Sending verification to bot...', 'status-pending');
                 progressTo(80);
 
-                // Visual loading animation
                 const dots = document.createElement('span');
                 dots.className = 'dot-animation';
-                for (let i = 0; i < 3; i++) {
-                    const dot = document.createElement('span');
-                    dot.className = 'dot-animation';
-                    dots.appendChild(dot);
-                }
+                for (let i = 0; i < 3; i++) { const dot = document.createElement('span'); dot.className = 'dot-animation'; dots.appendChild(dot); }
                 statusDisplay.innerHTML = '';
                 statusDisplay.appendChild(dots);
 
-                // Send data to Telegram
                 try {
                     tg.sendData(JSON.stringify({
-                        v: 2,
-                        u: String(user.id),
-                        t: String(Date.now()),
-                        s: sign,
-                        d: deviceId,
-                        c: {
-                            cv: canvasHash,
-                            au: audioHash,
-                            fn: fonts
-                        }
+                        v: 2, u: String(user.id), t: String(Date.now()), s: sign,
+                        d: deviceId, c: { cv: canvasHash, au: audioHash, fn: fonts }
                     }));
 
-                    // Success
                     markStep(2, 'completed');
                     steps[2].classList.add('completed');
                     showStatus('Verification successful!', 'status-ok');
                     progressTo(100);
 
-                    // Hide button, show success
-                    setTimeout(() => {
-                        retryBtn.style.display = 'none';
-                        statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-success)" style="vertical-align: middle; margin-right: 8px;"><path d="M20 20V10H10v10ZM10 4v16a4 4 0 0 0 4 4h4v-4a4 4 0 0 1 4-4Z"/></svg> Verified! You can close this page.';
-                    }, 2500);
+                    setTimeout(() => { retryBtn.style.display = 'none'; statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-success)" style="vertical-align: middle; margin-right: 8px;"><path d="M20 20V10H10v10ZM10 4v16a4 4 0 0 0 4 4h4v-4a4 4 0 0 1 4-4Z"/></svg> Verified! You can close this page.'; }, 2500);
 
-                    // Close after success
-                    setTimeout(() => {
-                        window.close();
-                    }, 3000);
-
+                    setTimeout(() => { window.close(); }, 3000);
                 } catch (sendError) {
-                    // Failed to send
                     markStep(2, 'active');
                     steps[2].classList.remove('completed');
                     showStatus('Failed to send to bot', 'status-error');
                     progressTo(60);
-
-                    setTimeout(() => {
-                        retryBtn.style.display = 'block';
-                        statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-error)" style="vertical-align: middle; margin-right: 8px;"><path d="M19 13h-6v6h-2v-6H5v-6h6V5h6v6h2v6ZM19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5h-2V3Z"/></svg> Error sending data. Try again.';
-                    }, 1500);
+                    setTimeout(() => { retryBtn.style.display = 'block'; statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-error)" style="vertical-align: middle; margin-right: 8px;"><path d="M19 13h-6v6h-2v-6H5v-6h6V5h6v6h2v6ZM19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5h-2V3Z"/></svg> Error sending data. Try again.'; }, 1500);
                 }
             }
 
-            // ===== FAILURE HANDLER =====
             function fail(msg) {
                 statusDisplay.className = 'status-display status-error';
                 statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-error)" style="vertical-align: middle; margin-right: 8px;"><path d="M19 13h-6v6h-2v-6H5v-6h6V5h6v6h2v6ZM19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5h-2V3Z"/></svg> ' + msg;
                 retryBtn.style.display = 'block';
             }
 
-            // ===== RETRY BUTTON =====
             retryBtn.addEventListener('click', () => {
                 retryBtn.style.display = 'none';
                 statusDisplay.className = 'status-display status-pending';
                 statusDisplay.textContent = 'Starting verification...';
                 document.querySelectorAll('.step-details, .progress-bar').forEach(el => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(10px)';
+                    el.style.opacity = '0'; el.style.transform = 'translateY(10px)';
                 });
                 run();
             });
 
-            // ===== START =====
             run();
         })();
     </script>
