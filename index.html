@@ -1,271 +1,241 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TG Store - Device Verification</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Using modern FingerprintJS v4 from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.umd.min.js"></script>
-  <style>
-    body { font-family: system-ui; background: #f5f5f7; margin: 0; padding: 20px; }
-    .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); max-width: 400px; margin: 0 auto; }
-    .spinner { border: 3px solid #e0e0e0; border-top-color: #0088cc; border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .status { display: flex; align-items: center; gap: 10px; padding: 10px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; }
-    .status.ok { background: #e8f5e9; }
-    .hash { font-family: monospace; background: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 13px; word-break: break-all; }
-    .btn { background: #0088cc; color: white; border: none; border-radius: 10px; padding: 14px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; }
-    .btn:disabled { background: #ccc; cursor: not-allowed; }
-    .hidden { display: none !important; }
-    .error-msg { color: #dc3545; font-size: 14px; margin-top: 10px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Device Verification</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:var(--tg-theme-bg-color,#0b1220);
+    --tx:var(--tg-theme-text-color,#ffffff);
+    --hint:var(--tg-theme-hint-color,#8fa3c0);
+    --btn:var(--tg-theme-button-color,#2ea6ff);
+    --btx:var(--tg-theme-button-text-color,#ffffff);
+    --card:var(--tg-theme-secondary-bg-color,#121c30);
+    --ok:#2ecc71; --bad:#ff5c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;
+       min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{width:100%;max-width:420px;background:var(--card);border-radius:20px;padding:28px 22px;
+        text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  .shield{width:64px;height:64px;margin:0 auto 14px;display:block}
+  h1{font-size:20px;margin-bottom:6px}
+  p.sub{color:var(--hint);font-size:14px;margin-bottom:18px}
+  ul{list-style:none;text-align:left;margin:0 0 18px}
+  li{display:flex;align-items:center;gap:10px;padding:7px 2px;color:var(--hint);font-size:14px}
+  li .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--hint);flex:none;
+          display:flex;align-items:center;justify-content:center;font-size:11px}
+  li.run{color:var(--tx)} li.run .dot{border-color:var(--btn);border-top-color:transparent;animation:spin .8s linear infinite}
+  li.done{color:var(--tx)} li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+  li.err{color:var(--bad)} li.err .dot{background:var(--bad);border-color:var(--bad);color:#fff}
+  .bar{height:6px;border-radius:6px;background:rgba(127,127,127,.25);overflow:hidden;margin-bottom:14px}
+  .bar i{display:block;height:100%;width:0;background:var(--btn);transition:width .3s}
+  #status{font-size:14px;min-height:20px;color:var(--hint)}
+  #status.err{color:var(--bad)} #status.ok{color:var(--ok)}
+  button{margin-top:16px;width:100%;padding:13px;border:0;border-radius:12px;background:var(--btn);
+         color:var(--btx);font-size:16px;font-weight:600;display:none}
+  .note{margin-top:16px;font-size:12px;color:var(--hint)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-  <div class="card">
-    <!-- Loading State -->
-    <div id="loading">
-      <div class="spinner"></div>
-      <h2 style="text-align:center; margin:0 0 8px;">Verifying Device</h2>
-      <p style="text-align:center; color:#666; margin:0;">Please wait - this takes 3-5 seconds</p>
-      <div id="progress" style="margin-top:20px;">
-        <div class="status" id="s-canvas"><span>Canvas</span> fingerprint...</div>
-        <div class="status" id="s-webgl"><span>WebGL</span> fingerprint...</div>
-        <div class="status" id="s-audio"><span>Audio</span> fingerprint...</div>
-        <div class="status" id="s-hardware"><span>Hardware</span> info...</div>
-      </div>
-      <div id="loadError" class="error-msg hidden"></div>
-    </div>
+<div class="card">
+  <svg class="shield" viewBox="0 0 64 64" fill="none">
+    <path d="M32 4 8 13v17c0 14 10 25 24 30 14-5 24-16 24-30V13L32 4Z" fill="var(--btn)" opacity=".18"/>
+    <path d="M32 4 8 13v17c0 14 10 25 24 30 14-5 24-16 24-30V13L32 4Z" stroke="var(--btn)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="m22 32 7 7 13-14" stroke="var(--btn)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <h1>Verifying your device</h1>
+  <p class="sub">This keeps the store free of fake accounts and duplicate referrals.</p>
+  <ul id="steps"></ul>
+  <div class="bar"><i id="bar"></i></div>
+  <div id="status">Starting...</div>
+  <button id="retry">Try again</button>
+  <p class="note">No personal data is collected. Only device characteristics are read and hashed on the server.</p>
+</div>
 
-    <!-- Success State -->
-    <div id="success" class="hidden">
-      <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px;">✓</div>
-        <h2 style="margin:10px 0;">Verification Complete</h2>
-      </div>
-      <div class="hash" id="hashDisplay"></div>
-      <div style="margin-top:16px; font-size:13px; color:#666;">Verified: <span id="timeDisplay"></span></div>
-      <button class="btn" id="sendBtn" onclick="sendToBot()">Sending to Bot...</button>
-    </div>
+<script>
+(function(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const qs = new URLSearchParams(location.search);
+  const U = qs.get('u'), T = qs.get('t'), S = qs.get('s');
+  const $ = id => document.getElementById(id);
 
-    <!-- Error State (Device Already Registered) -->
-    <div id="error" class="hidden">
-      <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px;">⚠</div>
-        <h2 style="margin:10px 0; color:#dc3545;">Device Already Registered</h2>
-      </div>
-      <div style="background:#fff0f0; border:1px solid #ffcccc; border-radius:10px; padding:16px; margin-bottom:16px;">
-        <p style="margin:0 0 8px;"><b>First User:</b> <span id="firstUser"></span></p>
-        <p style="margin:0 0 8px;"><b>Registered:</b> <span id="firstDate"></span></p>
-        <p style="margin:0; color:#dc3545;"><b>Referral reward not available on this device</b></p>
-      </div>
-      <button class="btn" style="background:#6c757d;" onclick="Telegram.WebApp.close()">Go to Bot (No Bonus)</button>
-    </div>
-  </div>
+  if (tg) { try { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e){} }
 
-  <script>
-    // Initialize Telegram Web App
-    if (window.Telegram && window.Telegram.WebApp) {
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
+  const STEPS = ['Checking your session','Reading screen & system','Reading graphics','Reading audio engine',
+                 'Reading fonts','Securing device ID','Sending result'];
+  const ul = $('steps');
+  STEPS.forEach((s,i)=>{ const li=document.createElement('li'); li.id='s'+i;
+    li.innerHTML='<span class="dot"></span><span>'+s+'</span>'; ul.appendChild(li); });
+
+  function mark(i, cls){ const li=$('s'+i); if(li){ li.className=cls; li.firstChild.textContent = cls==='done'?'✓':(cls==='err'?'!':''); } }
+  function progress(n){ $('bar').style.width = Math.round(n/STEPS.length*100)+'%'; }
+  function say(t, cls){ const s=$('status'); s.textContent=t; s.className=cls||''; }
+  function fail(msg){ say(msg,'err'); $('retry').style.display='block'; }
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+  const withTimeout = (p,ms,fb) => Promise.race([p, new Promise(r=>setTimeout(()=>r(fb),ms))]);
+
+  /* ---------- hashing ---------- */
+  function cyrb(str){
+    let h1=0xdeadbeef,h2=0x41c6ce57;
+    for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+    h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+    h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+    return (4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0');
+  }
+  async function sha256(str){
+    try{
+      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }catch(e){ return cyrb(str)+cyrb(str.split('').reverse().join('')); }
+  }
+
+  /* ---------- fingerprint parts ---------- */
+  function canvasData(){
+    try{
+      const c=document.createElement('canvas'); c.width=260; c.height=70;
+      const x=c.getContext('2d');
+      x.textBaseline='top'; x.font="16px Arial";
+      x.fillStyle='#f60'; x.fillRect(110,1,70,22);
+      x.fillStyle='#069'; x.fillText('TG MANDI \u2603 Cwm fjordbank glyphs vext quiz',2,15);
+      x.fillStyle='rgba(102,204,0,.7)'; x.font="18px Times New Roman"; x.fillText('device-check-2026',4,38);
+      x.globalCompositeOperation='multiply';
+      [['#f0f',40,50],['#0ff',70,50],['#ff0',55,30]].forEach(a=>{x.fillStyle=a[0];x.beginPath();x.arc(a[1]+150,a[2],22,0,6.28);x.fill();});
+      return c.toDataURL();
+    }catch(e){ return 'na'; }
+  }
+  function webgl(){
+    try{
+      const c=document.createElement('canvas');
+      const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+      if(!gl) return {v:'na',r:'na',p:'na'};
+      const e=gl.getExtension('WEBGL_debug_renderer_info');
+      const v=e?gl.getParameter(e.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR);
+      const r=e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+      const p=[gl.MAX_TEXTURE_SIZE,gl.MAX_VERTEX_ATTRIBS,gl.MAX_VIEWPORT_DIMS,gl.MAX_RENDERBUFFER_SIZE,
+               gl.MAX_VARYING_VECTORS,gl.MAX_FRAGMENT_UNIFORM_VECTORS,gl.ALIASED_LINE_WIDTH_RANGE]
+              .map(k=>String(gl.getParameter(k))).join('|');
+      return {v:String(v).slice(0,80), r:String(r).slice(0,100), p};
+    }catch(e){ return {v:'na',r:'na',p:'na'}; }
+  }
+  async function audio(){
+    try{
+      const C=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+      if(!C) return 'na';
+      const ctx=new C(1,44100,44100);
+      const o=ctx.createOscillator(); o.type='triangle'; o.frequency.value=10000;
+      const k=ctx.createDynamicsCompressor();
+      k.threshold.value=-50; k.knee.value=40; k.ratio.value=12; k.attack.value=0; k.release.value=.25;
+      o.connect(k); k.connect(ctx.destination); o.start(0);
+      const buf=await withTimeout(ctx.startRendering(),2000,null);
+      if(!buf) return 'na';
+      const d=buf.getChannelData(0); let s=0;
+      for(let i=4500;i<5000;i++) s+=Math.abs(d[i]);
+      return s.toFixed(6);
+    }catch(e){ return 'na'; }
+  }
+  function fonts(){
+    try{
+      const base=['monospace','sans-serif','serif'];
+      const list=['Arial','Verdana','Times New Roman','Courier New','Georgia','Roboto','Helvetica','Tahoma',
+        'Trebuchet MS','Impact','Comic Sans MS','Palatino','Garamond','Segoe UI','Noto Sans','Droid Sans',
+        'Ubuntu','SF Pro Text','Menlo','Consolas','Calibri','Cambria','Futura','Gill Sans'];
+      const t='mmmmmmmmmmlli', x=document.createElement('canvas').getContext('2d'), w={};
+      base.forEach(b=>{x.font='72px '+b; w[b]=x.measureText(t).width;});
+      return list.map(f=>base.some(b=>{x.font="72px '"+f+"',"+b; return x.measureText(t).width!==w[b];})?'1':'0').join('');
+    }catch(e){ return 'na'; }
+  }
+
+  /* ---------- persistent device id (localStorage + cookie + IndexedDB) ---------- */
+  const KEY='tgm_did';
+  const rnd = () => { const a=new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join(''); };
+  const getCookie = () => { const m=document.cookie.match(new RegExp('(?:^|; )'+KEY+'=([0-9a-f]{32})')); return m?m[1]:null; };
+  const setCookie = v => { try{ document.cookie=KEY+'='+v+'; max-age=315360000; path=/; SameSite=None; Secure'; }catch(e){} };
+  function idb(op,val){
+    return new Promise(res=>{
+      try{
+        const r=indexedDB.open('tgm',1);
+        r.onupgradeneeded=()=>r.result.createObjectStore('k');
+        r.onerror=()=>res(null);
+        r.onsuccess=()=>{
+          try{
+            const tx=r.result.transaction('k',op==='get'?'readonly':'readwrite'), st=tx.objectStore('k');
+            if(op==='get'){ const g=st.get(KEY); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }
+            else { st.put(val,KEY); tx.oncomplete=()=>res(true); tx.onerror=()=>res(null); }
+          }catch(e){ res(null); }
+        };
+      }catch(e){ res(null); }
+    });
+  }
+  async function persistentId(){
+    let id=null;
+    try{ id=localStorage.getItem(KEY); }catch(e){}
+    if(!/^[0-9a-f]{32}$/.test(id||'')) id=getCookie();
+    if(!/^[0-9a-f]{32}$/.test(id||'')) id=await withTimeout(idb('get'),1500,null);
+    if(!/^[0-9a-f]{32}$/.test(id||'')) id=rnd();
+    try{ localStorage.setItem(KEY,id); }catch(e){}
+    setCookie(id);
+    await withTimeout(idb('put',id),1500,null);
+    return id;
+  }
+
+  /* ---------- main flow ---------- */
+  async function run(){
+    $('retry').style.display='none';
+    STEPS.forEach((_,i)=>mark(i,''));
+    progress(0); say('Starting...','');
+
+    if(!tg || typeof tg.sendData!=='function' || !U || !T || !S){
+      mark(0,'err');
+      return fail('Please open this page from the bot: tap "Verify My Device" at the bottom of the chat.');
     }
+    mark(0,'run'); await sleep(250);
+    const tu = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if(tu && String(tu.id)!==String(U)){
+      mark(0,'err'); return fail('This link belongs to another account. Open it from your own chat with the bot.');
+    }
+    mark(0,'done'); progress(1);
 
-    // DOM Elements
-    const loadingEl = document.getElementById('loading');
-    const successEl = document.getElementById('success');
-    const errorEl = document.getElementById('error');
-    const loadErrorEl = document.getElementById('loadError');
-    const sendBtn = document.getElementById('sendBtn');
-    const hashDisplay = document.getElementById('hashDisplay');
-    const timeDisplay = document.getElementById('timeDisplay');
-    
-    // Status elements
-    const statusEls = {
-      canvas: document.getElementById('s-canvas'),
-      webgl: document.getElementById('s-webgl'),
-      audio: document.getElementById('s-audio'),
-      hardware: document.getElementById('s-hardware')
+    mark(1,'run'); await sleep(200);
+    const langs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'']).slice(0,3).join(',');
+    let tz=''; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
+    const comps={
+      sw:Math.max(screen.width,screen.height), sh:Math.min(screen.width,screen.height),
+      cd:screen.colorDepth||0, dpr:Math.round((window.devicePixelRatio||1)*100)/100,
+      tz:tz||('off'+new Date().getTimezoneOffset()), lg:langs, pf:navigator.platform||'na',
+      hc:navigator.hardwareConcurrency||0, dm:navigator.deviceMemory||0, tp:navigator.maxTouchPoints||0,
+      tgp:(tg.platform||'na'), wd:!!navigator.webdriver
     };
+    mark(1,'done'); progress(2);
 
-    let fingerprintHash = null;
-    let componentsData = '';
-    let dataSent = false;
+    mark(2,'run'); await sleep(200);
+    const cv=await sha256(canvasData()); comps.cv=cv.slice(0,32);
+    const g=webgl(); comps.gl_v=g.v; comps.gl_r=g.r; comps.gl_p=cyrb(g.p);
+    mark(2,'done'); progress(3);
 
-    // Update status UI
-    function updateStatus(key, text, isOk = false) {
-      const el = statusEls[key];
-      if (el) {
-        el.innerHTML = `<span>${key.charAt(0).toUpperCase() + key.slice(1)}</span> ${text}`;
-        if (isOk) el.classList.add('ok');
-      }
+    mark(3,'run'); comps.au=await audio(); mark(3,'done'); progress(4);
+
+    mark(4,'run'); await sleep(150); comps.fn=cyrb(fonts()); mark(4,'done'); progress(5);
+
+    mark(5,'run'); let did=''; try{ did=await persistentId(); }catch(e){ did=''; }
+    mark(5,'done'); progress(6);
+
+    mark(6,'run'); say('Sending result to the bot...','ok');
+    const payload={v:2,u:Number(U),t:Number(T),s:S,d:did,c:comps};
+    try{
+      tg.sendData(JSON.stringify(payload));
+      mark(6,'done'); progress(7);
+      setTimeout(()=>{ say('If this window did not close, tap Try again.','err'); $('retry').style.display='block'; },2500);
+    }catch(e){
+      mark(6,'err'); fail('Could not send the result. Please try again.');
     }
-
-    // Show error in loading screen
-    function showLoadError(msg) {
-      loadErrorEl.textContent = msg;
-      loadErrorEl.classList.remove('hidden');
-    }
-
-    // Switch views
-    function showView(view) {
-      loadingEl.classList.toggle('hidden', view !== 'loading');
-      successEl.classList.toggle('hidden', view !== 'success');
-      errorEl.classList.toggle('hidden', view !== 'error');
-    }
-
-    // Generate fallback fingerprint if FingerprintJS fails
-    async function generateFallbackFingerprint() {
-      updateStatus('canvas', 'generating fallback...');
-      
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 200;
-      canvas.height = 50;
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('Device fingerprint: ' + navigator.userAgent.slice(0, 50), 2, 2);
-      
-      const canvasFp = canvas.toDataURL();
-      
-      const components = [
-        'ua:' + navigator.userAgent,
-        'lang:' + navigator.language,
-        'platform:' + navigator.platform,
-        'cores:' + (navigator.hardwareConcurrency || 'unknown'),
-        'mem:' + (navigator.deviceMemory || 'unknown'),
-        'screen:' + screen.width + 'x' + screen.height,
-        'colorDepth:' + screen.colorDepth,
-        'tz:' + Intl.DateTimeFormat().resolvedOptions().timeZone,
-        'canvas:' + canvasFp.slice(0, 50)
-      ];
-      
-      // Simple hash function
-      let hash = 0;
-      const str = components.join('|');
-      for (let i = 0; i < str.length; i++) {
-        const chr = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash |= 0;
-      }
-      
-      fingerprintHash = Math.abs(hash).toString(16).padStart(8, '0') + 
-                        Math.abs(hash * 31).toString(16).padStart(8, '0') +
-                        Math.abs(hash * 313).toString(16).padStart(8, '0') +
-                        Math.abs(hash * 3131).toString(16).padStart(8, '0');
-      
-      componentsData = components.join('\n');
-      updateStatus('canvas', 'done', true);
-      updateStatus('webgl', 'done', true);
-      updateStatus('audio', 'done', true);
-      updateStatus('hardware', 'done', true);
-      
-      return fingerprintHash;
-    }
-
-    // Main fingerprinting function
-    async function generateFingerprint() {
-      try {
-        // Check if FingerprintJS loaded
-        if (typeof FingerprintJS === 'undefined') {
-          throw new Error('FingerprintJS library not loaded');
-        }
-
-        updateStatus('canvas', 'loading FingerprintJS...');
-        
-        // Load FingerprintJS agent
-        const fpPromise = FingerprintJS.load({
-          cache: true,
-          timeout: 10000
-        });
-        
-        updateStatus('canvas', 'initializing...', true);
-        const fp = await fpPromise;
-        
-        updateStatus('webgl', 'collecting WebGL...');
-        updateStatus('audio', 'collecting Audio...');
-        updateStatus('hardware', 'collecting Hardware...');
-        
-        // Get visitor identifier
-        const result = await fp.get();
-        
-        fingerprintHash = result.visitorId;
-        componentsData = result.components.map(c => `${c.key}: ${c.value}`).join('\n');
-        
-        updateStatus('canvas', 'done', true);
-        updateStatus('webgl', 'done', true);
-        updateStatus('audio', 'done', true);
-        updateStatus('hardware', 'done', true);
-        
-        return fingerprintHash;
-        
-      } catch (err) {
-        console.warn('FingerprintJS failed, using fallback:', err);
-        showLoadError('Primary method failed, using fallback...');
-        return await generateFallbackFingerprint();
-      }
-    }
-
-    // Send data to bot
-    function sendToBot() {
-      if (dataSent || !fingerprintHash) return;
-      
-      dataSent = true;
-      sendBtn.disabled = true;
-      sendBtn.textContent = 'Sending to Bot...';
-      
-      const payload = {
-        fingerprint_hash: fingerprintHash,
-        components: componentsData,
-        timestamp: Date.now(),
-        user_agent: navigator.userAgent
-      };
-      
-      try {
-        if (window.Telegram && window.Telegram.WebApp) {
-          Telegram.WebApp.sendData(JSON.stringify(payload));
-          
-          // Give bot time to process before closing
-          setTimeout(() => {
-            Telegram.WebApp.close();
-          }, 2000);
-        } else {
-          throw new Error('Telegram WebApp not available');
-        }
-      } catch (err) {
-        console.error('Send failed:', err);
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Retry';
-        dataSent = false;
-        alert('Failed to send data. Please try again.');
-      }
-    }
-
-    // Initialize
-    async function init() {
-      // Small delay to let UI render
-      await new Promise(r => setTimeout(r, 100));
-      
-      try {
-        const hash = await generateFingerprint();
-        
-        if (!hash) {
-          throw new Error('Failed to generate fingerprint');
-        }
-        
-        showView('success');
-        hashDisplay.textContent = 'Device ID: ' + hash;
-        timeDisplay.textContent = new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'});
-        sendBtn.textContent = 'Continue to Bot';
-        sendBtn.disabled = false;
-        
-      } catch (err) {
-        console.error('Init failed:', err);
-        showView('loading');
-        showLoadError('Verification failed: ' + err.message + '. Please refresh and try again.');
-      }
-    }
-
-    // Start
-    init();
-  </script>
+  }
+  $('retry').addEventListener('click',run);
+  run();
+})();
+</script>
 </body>
 </html>
