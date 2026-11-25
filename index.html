@@ -2,240 +2,876 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1">
 <title>Device Verification</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Device verification for TG MANDI Account Store">
+<meta name="author" content="TG MANDI Bot">
+<title>Device Verification - TG MANDI</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/minimal.css">
+
 <style>
-  :root{
-    --bg:var(--tg-theme-bg-color,#0b1220);
-    --tx:var(--tg-theme-text-color,#ffffff);
-    --hint:var(--tg-theme-hint-color,#8fa3c0);
-    --btn:var(--tg-theme-button-color,#2ea6ff);
-    --btx:var(--tg-theme-button-text-color,#ffffff);
-    --card:var(--tg-theme-secondary-bg-color,#121c30);
-    --ok:#2ecc71; --bad:#ff5c5c;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;
-       min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .card{width:100%;max-width:420px;background:var(--card);border-radius:20px;padding:28px 22px;
-        text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-  .shield{width:64px;height:64px;margin:0 auto 14px;display:block}
-  h1{font-size:20px;margin-bottom:6px}
-  p.sub{color:var(--hint);font-size:14px;margin-bottom:18px}
-  ul{list-style:none;text-align:left;margin:0 0 18px}
-  li{display:flex;align-items:center;gap:10px;padding:7px 2px;color:var(--hint);font-size:14px}
-  li .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--hint);flex:none;
-          display:flex;align-items:center;justify-content:center;font-size:11px}
-  li.run{color:var(--tx)} li.run .dot{border-color:var(--btn);border-top-color:transparent;animation:spin .8s linear infinite}
-  li.done{color:var(--tx)} li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
-  li.err{color:var(--bad)} li.err .dot{background:var(--bad);border-color:var(--bad);color:#fff}
-  .bar{height:6px;border-radius:6px;background:rgba(127,127,127,.25);overflow:hidden;margin-bottom:14px}
-  .bar i{display:block;height:100%;width:0;background:var(--btn);transition:width .3s}
-  #status{font-size:14px;min-height:20px;color:var(--hint)}
-  #status.err{color:var(--bad)} #status.ok{color:var(--ok)}
-  button{margin-top:16px;width:100%;padding:13px;border:0;border-radius:12px;background:var(--btn);
-         color:var(--btx);font-size:16px;font-weight:600;display:none}
-  .note{margin-top:16px;font-size:12px;color:var(--hint)}
-  @keyframes spin{to{transform:rotate(360deg)}}
+    /* ===== CSS VARIABLES & THEME ===== */
+    :root {
+        --tg-theme-bg: #0b1220;
+        --tg-theme-text: #f0f4f8;
+        --tg-theme-hint: #8aa7c2;
+        --tg-theme-primary: #00d4aa;
+        --tg-theme-secondary: #63b3e8;
+        --tg-theme-accent: #ff6b6b;
+        --tg-card: rgba(17, 23, 35, 0.8);
+        --tg-card-hover: rgba(20, 28, 38, 0.9);
+        --tg-border: rgba(255, 255, 255, 0.08);
+        --tg-success: #2ecc71;
+        --tg-error: #e74c3c;
+        --tg-warning: #f1c40f;
+    }
+
+    /* ===== RESET & BASE ===== */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    html, body {
+        height: 100%;
+        background: var(--tg-theme-bg);
+        color: var(--tg-theme-text);
+        font-family: 'Inter', 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        overflow: hidden;
+        position: relative;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: 
+            radial-gradient(ellipse 80% 50% at 20% 20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99, 179, 232, 0.05) 0%, transparent 50%),
+            linear-gradient(180deg, #0b1220 0%, #0e1528 100%);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    /* ===== GLASMORPHISM BACKGROUND ANIMATION ===== */
+    .bg-layer {
+        position: fixed;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+        z-index: 0;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .layer-1 {
+        top: -100px;
+        left: -100px;
+        background: radial-gradient(circle, #00d4aa 0%, #008866 100%);
+        animation-delay: 0s;
+    }
+
+    .layer-2 {
+        bottom: -100px;
+        right: -100px;
+        background: radial-gradient(circle, #63b3e8 0%, #2c9ab7 100%);
+        animation-delay: 7s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.05); }
+        66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    /* ===== NOISE TEXTURE ===== */
+    .noise-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background-image: url("data:image/svg+xml,<svg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'><filter id='noise'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/></filter><rect width='256' height='256' filter='url(#noise)'/></svg>");
+        opacity: 0.03;
+        animation: noiseMove 15s linear infinite;
+    }
+
+    @keyframes noiseMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-1px, -1px); }
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .app-container {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        width: 100%;
+        max-width: 440px;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+        background: var(--tg-card);
+        border: 1px solid var(--tg-border);
+        border-radius: 24px;
+        padding: 40px 32px;
+        position: relative;
+        z-index: 2;
+        backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+        animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .card:hover {
+        border-color: rgba(0, 212, 170, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--tg-primary), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .card:hover::before {
+        opacity: 0.5;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .shield-icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px;
+        display: block;
+        background: linear-gradient(135deg, var(--tg-primary), var-tg-secondary);
+        border-radius: 16px;
+        position: relative;
+    }
+
+    .shield-icon::before {
+        content: '';
+        position: absolute;
+        top: 8px; left: 8px;
+        width: 32px; height: 32px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+    }
+
+    .shield-icon svg {
+        width: 32px; height: 32px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+    }
+
+    .header p {
+        color: var(--tg-theme-hint);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+    }
+
+    /* ===== STEPS INDICATOR ===== */
+    .steps-indicator {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .step {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: transparent;
+        border: 2px solid var(--tg-border);
+        color: var(--tg-theme-hint);
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: default;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .step.active {
+        background: var(--tg-primary);
+        color: #0b1220;
+        border-color: var(--tg-primary);
+        box-shadow: 0 0 15px rgba(0, 212, 170, 0.3);
+    }
+
+    .step.completed {
+        background: var(--tg-primary);
+        color: #0b1220;
+        border-color: var(--tg-primary);
+    }
+
+    .step:hover:not(.active):not(.completed) {
+        border-color: var(--tg-hint);
+        color: var(--tg-hint);
+    }
+
+    .step-number {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .step-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--tg-primary), var(--tg-secondary));
+        border-radius: 3px;
+        width: 0%;
+        transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background: var(--tg-primary);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--tg-primary);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* ===== STEP DETAILS ===== */
+    .step-details {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--tg-border);
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 12px;
+        color: var(--tg-theme-hint);
+        border-bottom: 1px solid var(--tg-border);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: var(--tg-theme-hint);
+    }
+
+    .detail-value {
+        color: var(--tg-theme-text);
+        font-family: 'Space Grotesk', monospace;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+        width: 100%;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 12px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .btn:hover::before {
+        opacity: 1;
+    }
+
+    .btn:focus-visible {
+        outline: 2px solid var(--tg-primary);
+        outline-offset: 4px;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .btn-primary {
+        background: var(--tg-primary);
+        color: #0b1220;
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: var(--tg-theme-text);
+        border: 1px solid var(--tg-border);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--tg-primary);
+        color: var(--tg-primary);
+    }
+
+    .btn-danger {
+        background: var(--tg-error);
+        color: #fff;
+    }
+
+    .btn-danger:hover {
+        box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
+    }
+
+    /* ===== STATUS DISPLAY ===== */
+    .status-display {
+        padding: 16px;
+        border-radius: 12px;
+        margin: 16px 0;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        min-height: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .status-ok {
+        background: rgba(46, 204, 113, 0.1);
+        border: 1px solid var(--tg-success);
+        color: var(--tg-success);
+    }
+
+    .status-error {
+        background: rgba(231, 76, 60, 0.1);
+        border: 1px solid var(--tg-error);
+        color: var(--tg-error);
+    }
+
+    .status-pending {
+        background: rgba(241, 196, 15, 0.1);
+        border: 1px solid var(--tg-warning);
+        color: var(--tg-warning);
+    }
+
+    /* ===== ANIMATED DOTS ===== */
+    .dot-animation {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--tg-primary);
+        animation: dotBounce 1.4s ease-in-out infinite;
+    }
+
+    .dot-animation:nth-child(2) { animation-delay: 0.2s; }
+    .dot-animation:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotBounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 440px) {
+        .card { padding: 32px 20px; }
+        .header h1 { font-size: 20px; }
+        .shield-icon { width: 48px; height: 48px; }
+        .shield-icon svg { width: 28px; height: 28px; }
+    }
 </style>
 </head>
 <body>
-<div class="card">
-  <svg class="shield" viewBox="0 0 64 64" fill="none">
-    <path d="M32 4 8 13v17c0 14 10 25 24 30 14-5 24-16 24-30V13L32 4Z" fill="var(--btn)" opacity=".18"/>
-    <path d="M32 4 8 13v17c0 14 10 25 24 30 14-5 24-16 24-30V13L32 4Z" stroke="var(--btn)" stroke-width="3" stroke-linejoin="round"/>
-    <path d="m22 32 7 7 13-14" stroke="var(--btn)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <h1>Verifying your device</h1>
-  <p class="sub">This keeps the store free of fake accounts and duplicate referrals.</p>
-  <ul id="steps"></ul>
-  <div class="bar"><i id="bar"></i></div>
-  <div id="status">Starting...</div>
-  <button id="retry">Try again</button>
-  <p class="note">No personal data is collected. Only device characteristics are read and hashed on the server.</p>
-</div>
+    <!-- Noise overlay -->
+    <div class="noise-overlay"></div>
 
-<script>
-(function(){
-  const tg = window.Telegram && window.Telegram.WebApp;
-  const qs = new URLSearchParams(location.search);
-  const U = qs.get('u'), T = qs.get('t'), S = qs.get('s');
-  const $ = id => document.getElementById(id);
+    <!-- Background layers -->
+    <div class="bg-layer layer-1"></div>
+    <div class="bg-layer layer-2"></div>
 
-  if (tg) { try { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch(e){} }
+    <!-- App container -->
+    <div class="app-container">
+        <div class="card">
+            <div class="header">
+                <div class="shield-icon">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <path d="M32 4 8 13v17c0 14 10 25 24 30 14-5 24-16 24-30V13L32 4Z" fill="none"/>
+                        <circle cx="32" cy="32" r="24" fill="rgba(255,255,255,.1)"/>
+                        <circle cx="32" cy="32" r="12" fill="none" stroke="var(--tg-primary)" stroke-width="3"/>
+                        <line x1="20" y1="22" x2="44" y2="22" stroke="var(--tg-primary)" stroke-width="3"/>
+                        <line x1="20" y1="38" x2="44" y2="38" stroke="var(--tg-primary)" stroke-width="3"/>
+                    </svg>
+                </svg>
+                <h1>Device Verification</h1>
+                <p class="sub">Verifying your device for secure account access</p>
+            </div>
 
-  const STEPS = ['Checking your session','Reading screen & system','Reading graphics','Reading audio engine',
-                 'Reading fonts','Securing device ID','Sending result'];
-  const ul = $('steps');
-  STEPS.forEach((s,i)=>{ const li=document.createElement('li'); li.id='s'+i;
-    li.innerHTML='<span class="dot"></span><span>'+s+'</span>'; ul.appendChild(li); });
+            <!-- Steps indicator -->
+            <div class="steps-indicator">
+                <div class="step active" id="s0">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Session</span>
+                </div>
+                <div class="step" id="s1">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Device</span>
+                </div>
+                <div class="step" id="s2">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Result</span>
+                </div>
+            </div>
 
-  function mark(i, cls){ const li=$('s'+i); if(li){ li.className=cls; li.firstChild.textContent = cls==='done'?'✓':(cls==='err'?'!':''); } }
-  function progress(n){ $('bar').style.width = Math.round(n/STEPS.length*100)+'%'; }
-  function say(t, cls){ const s=$('status'); s.textContent=t; s.className=cls||''; }
-  function fail(msg){ say(msg,'err'); $('retry').style.display='block'; }
-  const sleep = ms => new Promise(r=>setTimeout(r,ms));
-  const withTimeout = (p,ms,fb) => Promise.race([p, new Promise(r=>setTimeout(()=>r(fb),ms))]);
+            <!-- Progress bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
 
-  /* ---------- hashing ---------- */
-  function cyrb(str){
-    let h1=0xdeadbeef,h2=0x41c6ce57;
-    for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
-    h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
-    h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
-    return (4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0');
-  }
-  async function sha256(str){
-    try{
-      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }catch(e){ return cyrb(str)+cyrb(str.split('').reverse().join('')); }
-  }
+            <!-- Step details -->
+            <div class="step-details" id="details">
+                <div class="detail-row">
+                    <span class="detail-label">Step:</span>
+                    <span class="detail-value" id="step-name">1 / 3</span>
+                </div>
+            </div>
 
-  /* ---------- fingerprint parts ---------- */
-  function canvasData(){
-    try{
-      const c=document.createElement('canvas'); c.width=260; c.height=70;
-      const x=c.getContext('2d');
-      x.textBaseline='top'; x.font="16px Arial";
-      x.fillStyle='#f60'; x.fillRect(110,1,70,22);
-      x.fillStyle='#069'; x.fillText('TG MANDI \u2603 Cwm fjordbank glyphs vext quiz',2,15);
-      x.fillStyle='rgba(102,204,0,.7)'; x.font="18px Times New Roman"; x.fillText('device-check-2026',4,38);
-      x.globalCompositeOperation='multiply';
-      [['#f0f',40,50],['#0ff',70,50],['#ff0',55,30]].forEach(a=>{x.fillStyle=a[0];x.beginPath();x.arc(a[1]+150,a[2],22,0,6.28);x.fill();});
-      return c.toDataURL();
-    }catch(e){ return 'na'; }
-  }
-  function webgl(){
-    try{
-      const c=document.createElement('canvas');
-      const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
-      if(!gl) return {v:'na',r:'na',p:'na'};
-      const e=gl.getExtension('WEBGL_debug_renderer_info');
-      const v=e?gl.getParameter(e.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR);
-      const r=e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
-      const p=[gl.MAX_TEXTURE_SIZE,gl.MAX_VERTEX_ATTRIBS,gl.MAX_VIEWPORT_DIMS,gl.MAX_RENDERBUFFER_SIZE,
-               gl.MAX_VARYING_VECTORS,gl.MAX_FRAGMENT_UNIFORM_VECTORS,gl.ALIASED_LINE_WIDTH_RANGE]
-              .map(k=>String(gl.getParameter(k))).join('|');
-      return {v:String(v).slice(0,80), r:String(r).slice(0,100), p};
-    }catch(e){ return {v:'na',r:'na',p:'na'}; }
-  }
-  async function audio(){
-    try{
-      const C=window.OfflineAudioContext||window.webkitOfflineAudioContext;
-      if(!C) return 'na';
-      const ctx=new C(1,44100,44100);
-      const o=ctx.createOscillator(); o.type='triangle'; o.frequency.value=10000;
-      const k=ctx.createDynamicsCompressor();
-      k.threshold.value=-50; k.knee.value=40; k.ratio.value=12; k.attack.value=0; k.release.value=.25;
-      o.connect(k); k.connect(ctx.destination); o.start(0);
-      const buf=await withTimeout(ctx.startRendering(),2000,null);
-      if(!buf) return 'na';
-      const d=buf.getChannelData(0); let s=0;
-      for(let i=4500;i<5000;i++) s+=Math.abs(d[i]);
-      return s.toFixed(6);
-    }catch(e){ return 'na'; }
-  }
-  function fonts(){
-    try{
-      const base=['monospace','sans-serif','serif'];
-      const list=['Arial','Verdana','Times New Roman','Courier New','Georgia','Roboto','Helvetica','Tahoma',
-        'Trebuchet MS','Impact','Comic Sans MS','Palatino','Garamond','Segoe UI','Noto Sans','Droid Sans',
-        'Ubuntu','SF Pro Text','Menlo','Consolas','Calibri','Cambria','Futura','Gill Sans'];
-      const t='mmmmmmmmmmlli', x=document.createElement('canvas').getContext('2d'), w={};
-      base.forEach(b=>{x.font='72px '+b; w[b]=x.measureText(t).width;});
-      return list.map(f=>base.some(b=>{x.font="72px '"+f+"',"+b; return x.measureText(t).width!==w[b];})?'1':'0').join('');
-    }catch(e){ return 'na'; }
-  }
+            <!-- Status -->
+            <div class="status-display" id="status" class="status-pending">
+                Starting verification...
+            </div>
 
-  /* ---------- persistent device id (localStorage + cookie + IndexedDB) ---------- */
-  const KEY='tgm_did';
-  const rnd = () => { const a=new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join(''); };
-  const getCookie = () => { const m=document.cookie.match(new RegExp('(?:^|; )'+KEY+'=([0-9a-f]{32})')); return m?m[1]:null; };
-  const setCookie = v => { try{ document.cookie=KEY+'='+v+'; max-age=315360000; path=/; SameSite=None; Secure'; }catch(e){} };
-  function idb(op,val){
-    return new Promise(res=>{
-      try{
-        const r=indexedDB.open('tgm',1);
-        r.onupgradeneeded=()=>r.result.createObjectStore('k');
-        r.onerror=()=>res(null);
-        r.onsuccess=()=>{
-          try{
-            const tx=r.result.transaction('k',op==='get'?'readonly':'readwrite'), st=tx.objectStore('k');
-            if(op==='get'){ const g=st.get(KEY); g.onsuccess=()=>res(g.result||null); g.onerror=()=>res(null); }
-            else { st.put(val,KEY); tx.oncomplete=()=>res(true); tx.onerror=()=>res(null); }
-          }catch(e){ res(null); }
-        };
-      }catch(e){ res(null); }
-    });
-  }
-  async function persistentId(){
-    let id=null;
-    try{ id=localStorage.getItem(KEY); }catch(e){}
-    if(!/^[0-9a-f]{32}$/.test(id||'')) id=getCookie();
-    if(!/^[0-9a-f]{32}$/.test(id||'')) id=await withTimeout(idb('get'),1500,null);
-    if(!/^[0-9a-f]{32}$/.test(id||'')) id=rnd();
-    try{ localStorage.setItem(KEY,id); }catch(e){}
-    setCookie(id);
-    await withTimeout(idb('put',id),1500,null);
-    return id;
-  }
+            <!-- Steps -->
+            <ul id="steps"></ul>
 
-  /* ---------- main flow ---------- */
-  async function run(){
-    $('retry').style.display='none';
-    STEPS.forEach((_,i)=>mark(i,''));
-    progress(0); say('Starting...','');
+            <!-- Button -->
+            <button class="btn btn-primary" id="retry" style="display: none;">Try Again</button>
 
-    if(!tg || typeof tg.sendData!=='function' || !U || !T || !S){
-      mark(0,'err');
-      return fail('Please open this page from the bot: tap "Verify My Device" at the bottom of the chat.');
-    }
-    mark(0,'run'); await sleep(250);
-    const tu = tg.initDataUnsafe && tg.initDataUnsafe.user;
-    if(tu && String(tu.id)!==String(U)){
-      mark(0,'err'); return fail('This link belongs to another account. Open it from your own chat with the bot.');
-    }
-    mark(0,'done'); progress(1);
+            <p class="note">No personal data is collected. Only device characteristics are read and hashed on the server.</p>
+        </div>
+    </div>
 
-    mark(1,'run'); await sleep(200);
-    const langs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'']).slice(0,3).join(',');
-    let tz=''; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
-    const comps={
-      sw:Math.max(screen.width,screen.height), sh:Math.min(screen.width,screen.height),
-      cd:screen.colorDepth||0, dpr:Math.round((window.devicePixelRatio||1)*100)/100,
-      tz:tz||('off'+new Date().getTimezoneOffset()), lg:langs, pf:navigator.platform||'na',
-      hc:navigator.hardwareConcurrency||0, dm:navigator.deviceMemory||0, tp:navigator.maxTouchPoints||0,
-      tgp:(tg.platform||'na'), wd:!!navigator.webdriver
-    };
-    mark(1,'done'); progress(2);
+    <script>
+        // ===== INITIALISATION =====
+        (function() {
+            'use strict';
 
-    mark(2,'run'); await sleep(200);
-    const cv=await sha256(canvasData()); comps.cv=cv.slice(0,32);
-    const g=webgl(); comps.gl_v=g.v; comps.gl_r=g.r; comps.gl_p=cyrb(g.p);
-    mark(2,'done'); progress(3);
+            const tg = window.Telegram && window.Telegram.WebApp;
+            const qs = new URLSearchParams(location.search);
+            const userId = qs.get('u');
+            const token = qs.get('t');
+            const sign = qs.get('s');
 
-    mark(3,'run'); comps.au=await audio(); mark(3,'done'); progress(4);
+            const $ = id => document.getElementById(id);
+            const $$ = sel => document.querySelector(sel);
 
-    mark(4,'run'); await sleep(150); comps.fn=cyrb(fonts()); mark(4,'done'); progress(5);
+            // Check if running from bot
+            if (!tg || typeof tg.sendData !== 'function') {
+                document.body.innerHTML = `
+                    <div style="font-family: system-ui, sans-serif; padding: 40px; text-align: center; color: #666;">
+                        <h2>Verification Page Error</h2>
+                        <p>This page must be opened from the Telegram bot.</p>
+                        <p>Please go back to the bot and tap <b>Verify My Device</b>.</p>
+                    `;
+                return;
+            }
 
-    mark(5,'run'); let did=''; try{ did=await persistentId(); }catch(e){ did=''; }
-    mark(5,'done'); progress(6);
+            // Initialize Telegram
+            tg.ready();
+            tg.expand();
 
-    mark(6,'run'); say('Sending result to the bot...','ok');
-    const payload={v:2,u:Number(U),t:Number(T),s:S,d:did,c:comps};
-    try{
-      tg.sendData(JSON.stringify(payload));
-      mark(6,'done'); progress(7);
-      setTimeout(()=>{ say('If this window did not close, tap Try again.','err'); $('retry').style.display='block'; },2500);
-    }catch(e){
-      mark(6,'err'); fail('Could not send the result. Please try again.');
-    }
-  }
-  $('retry').addEventListener('click',run);
-  run();
-})();
-</script>
+            // Set user
+            if (userId && token && sign) {
+                tg.initDataUnsafe.user = {
+                    id: Number(userId),
+                    username: '',
+                    first_name: '',
+                    last_name: ''
+                };
+            }
+
+            // ===== ELEMENTS =====
+            const steps = document.querySelectorAll('.step');
+            const progressFill = $('#progress');
+            const statusDisplay = $('#status');
+            const retryBtn = $('retry');
+            const stepsIndicator = document.querySelector('.steps-indicator');
+
+            // ===== DATA COLLECTION =====
+            const collectionSteps = [
+                { name: 'Session', done: false, element: null },
+                { name: 'Device', done: false, element: null },
+                { name: 'Result', done: false, element: null }
+            ];
+
+            // ===== ANIMATION HELPERS =====
+            function progressTo(percent) {
+                progressFill.style.width = percent + '%';
+            }
+
+            function markStep(stepIndex, cls) {
+                steps.forEach((s, i) => {
+                    s.classList.remove('active', 'completed');
+                    if (i < stepIndex) s.classList.add('completed');
+                    if (i === stepIndex) s.classList.add('active');
+                });
+                progressTo(((stepIndex + 1) / steps.length) * 100);
+                document.querySelectorAll('.step-label')[stepIndex].textContent = 
+                    steps[stepIndex].dataset.label;
+            }
+
+            function showStatus(msg, type) {
+                statusDisplay.textContent = msg;
+                statusDisplay.className = 'status-display ' + (type || 'status-pending');
+            }
+
+            function animateStep(stepIndex) {
+                const step = steps[stepIndex];
+                step.style.animation = 'none';
+                step.offsetHeight; // trigger reflow
+                step.style.animation = 'none';
+            }
+
+            // ===== MAIN FLOW =====
+            async function run() {
+                // Hide initial content
+                document.querySelectorAll('.step-details, .progress-bar, .btn-primary').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(10px)';
+                });
+                statusDisplay.className = 'status-display status-pending';
+                statusDisplay.textContent = 'Starting verification...';
+
+                // Step 1: Session check
+                markStep(0, 'active');
+                steps[0].classList.add('active');
+                steps[0].style.animation = 'none';
+                steps[0].offsetHeight;
+                steps[0].style.animation = '';
+                steps[0].classList.add('completed');
+
+                showStatus('Checking your session...', 'status-pending');
+                progressTo(20);
+
+                if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+                    showStatus('No Telegram user data found', 'status-error');
+                    return fail('Please open this page from the bot.');
+                }
+
+                markStep(1, 'active');
+                steps[1].classList.add('active');
+                steps[1].classList.remove('completed');
+                showStatus('Reading device characteristics...', 'status-pending');
+                progressTo(40);
+
+                // Step 2: Collect fingerprint data
+                const user = tg.initDataUnsafe.user;
+
+                // Canvas fingerprint
+                const canvas = document.createElement('canvas');
+                canvas.width = 260;
+                canvas.height = 70;
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(110, 1, 70, 22);
+                ctx.fillStyle = '#069';
+                ctx.fillText('TG MANDI ✅ Cwm fjordbank glyphs vext quiz', 2, 15);
+                ctx.globalCompositeOperation = 'multiply';
+                [['#f0f', 40, 50], ['#0ff', 70, 50], ['#ff0', 55, 30]].forEach(([c, x, y]) => {
+                    ctx.fillStyle = c;
+                    ctx.beginPath();
+                    ctx.arc(x + 150, y, 22, 0, 6.28);
+                    ctx.fill();
+                });
+
+                const canvasDataUrl = canvas.toDataURL();
+                const canvasHash = canvasDataUrl.slice(41, 73); // first 32 chars of base64
+
+                // WebGL renderer
+                const webglCanvas = document.createElement('canvas');
+                const webgl = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl');
+                let webglInfo = { v: 'na', r: 'na', p: 'na' };
+                if (webgl) {
+                    const ext = webgl.getExtension('WEBGL_debug_renderer_info');
+                    webglInfo = {
+                        v: webgl.getParameter(ext ? ext.UNMASKED_VENDOR_WEBGL : webgl.VENDOR).slice(0, 80),
+                        r: webgl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : webgl.RENDERER).slice(0, 100),
+                        p: Array(7).fill(0).map((_, i) => String(webgl.getParameter([640, 480, 1920, 1080, 256, 64, 4096][i]))).join('|')
+                    };
+                }
+
+                // Audio fingerprint
+                let audioHash = 'na';
+                try {
+                    const OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+                    if (OfflineAudioContext) {
+                        const ctx = new OfflineAudioContext(1, 44100, 44100);
+                        const osc = ctx.createOscillator();
+                        osc.type = 'triangle';
+                        osc.frequency.value = 10000;
+                        const comp = ctx.createDynamicsCompressor();
+                        comp.threshold.value = -50;
+                        comp.knee.value = 40;
+                        comp.ratio.value = 12;
+                        comp.attack.value = 0;
+                        comp.release.value = .25;
+                        osc.connect(comp);
+                        comp.connect(ctx.destination);
+                        osc.start(0);
+                        const buf = await ctx.startRendering();
+                        if (buf) {
+                            const data = buf.getChannelData(0);
+                            let sum = 0;
+                            for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]);
+                            audioHash = sum.toFixed(6);
+                        }
+                    }
+                } catch (e) {
+                    audioHash = 'na';
+                }
+
+                // Fonts fingerprint
+                const fonts = (() => {
+                    const base = ['monospace', 'sans-serif', 'serif'];
+                    const list = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Roboto', 'Helvetica', 'Tahoma',
+                        'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Palatino', 'Garamond', 'Segoe UI', 'Noto Sans', 'Droid Sans',
+                        'Ubuntu', 'SF Pro Text', 'Menlo', 'Consolas', 'Calibri', 'Cambria', 'Futura', 'Gill Sans'];
+                    const t = 'mmmmmmmmmmlli';
+                    const x = document.createElement('canvas').getContext('2d');
+                    const w = {};
+                    base.forEach(b => {
+                        x.font = '72px ' + b;
+                        w[b] = x.measureText(t).width;
+                    });
+                    return list.map(f => base.some(b => {
+                        x.font = '72px \'' + f + '\',' + b;
+                        return x.measureText(t).width !== w[b];
+                    })).join('');
+                })();
+
+                // Device ID generation
+                let deviceId = '';
+                try {
+                    // Try IndexedDB first
+                    const idbPromise = new Promise(resolve => {
+                        const req = indexedDB.open('tgm', 1);
+                        req.onupgradeneeded = () => req.result.createObjectStore('k');
+                        req.onsuccess = () => {
+                            const tx = req.result.transaction('k', 'readonly');
+                            const g = tx.objectStore('k').get('tgm_did');
+                            g.onsuccess = () => resolve(g.result || null);
+                            g.onerror = () => resolve(null);
+                        };
+                        req.onerror = () => resolve(null);
+                    });
+
+                    const cookieMatch = document.cookie.match(new RegExp('(?:^|; )tgm_did=([0-9a-f]{32})'));
+                    const hasId = /^[0-9a-f]{32}$/.test(cookieMatch ? cookieMatch[1] : '');
+
+                    if (hasId) {
+                        deviceId = cookieMatch[1];
+                    } else {
+                        // Generate random
+                        const randomId = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+                        deviceId = randomId;
+
+                        // Save to IndexedDB
+                        try {
+                            const dbRequest = indexedDB.open('tgm', 1);
+                            dbRequest.onupgradeneeded = () => dbRequest.result.createObjectStore('k');
+                            dbRequest.onsuccess = () => {
+                                const tx = dbRequest.result.transaction('k', 'readwrite');
+                                tx.objectStore('k').put(deviceId, 'tgm_did');
+                            };
+                        } catch (e) {}
+
+                        // Save to cookie
+                        try {
+                            document.cookie = 'tgm_did=' + deviceId + '; max-age=315360000; path=/; SameSite=None; Secure';
+                        } catch (e) {}
+                    }
+                } catch (e) {
+                    deviceId = crypto.randomUUID().replace(/-/g, '').slice(0, 32);
+                }
+
+                // Collect all data
+                const fingerprintData = {
+                    cv: canvasHash,          // Canvas hash (32 chars)
+                    gl_v: webglInfo.v,        // WebGL vendor
+                    gl_r: webglInfo.r,        // WebGL renderer
+                    gl_p: webglInfo.p,        // WebGL parameters
+                    au: audioHash,            // Audio fingerprint
+                    fn: fonts,                // Fonts fingerprint
+                    u: String(user.id),       // User ID
+                    t: String(Date.now()),    // Timestamp
+                    s: sign,                  // Signature (from query)
+                    canvas: canvasDataUrl     // Full canvas data
+                };
+
+                // Step 3: Send to bot
+                markStep(2, 'active');
+                steps[2].classList.add('active');
+                steps[2].classList.remove('completed');
+                showStatus('Sending verification to bot...', 'status-pending');
+                progressTo(80);
+
+                // Visual loading animation
+                const dots = document.createElement('span');
+                dots.className = 'dot-animation';
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'dot-animation';
+                    dots.appendChild(dot);
+                }
+                statusDisplay.innerHTML = '';
+                statusDisplay.appendChild(dots);
+
+                // Send data to Telegram
+                try {
+                    tg.sendData(JSON.stringify({
+                        v: 2,
+                        u: String(user.id),
+                        t: String(Date.now()),
+                        s: sign,
+                        d: deviceId,
+                        c: {
+                            cv: canvasHash,
+                            au: audioHash,
+                            fn: fonts
+                        }
+                    }));
+
+                    // Success
+                    markStep(2, 'completed');
+                    steps[2].classList.add('completed');
+                    showStatus('Verification successful!', 'status-ok');
+                    progressTo(100);
+
+                    // Hide button, show success
+                    setTimeout(() => {
+                        retryBtn.style.display = 'none';
+                        statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-success)" style="vertical-align: middle; margin-right: 8px;"><path d="M20 20V10H10v10ZM10 4v16a4 4 0 0 0 4 4h4v-4a4 4 0 0 1 4-4Z"/></svg> Verified! You can close this page.';
+                    }, 2500);
+
+                    // Close after success
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+
+                } catch (sendError) {
+                    // Failed to send
+                    markStep(2, 'active');
+                    steps[2].classList.remove('completed');
+                    showStatus('Failed to send to bot', 'status-error');
+                    progressTo(60);
+
+                    setTimeout(() => {
+                        retryBtn.style.display = 'block';
+                        statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-error)" style="vertical-align: middle; margin-right: 8px;"><path d="M19 13h-6v6h-2v-6H5v-6h6V5h6v6h2v6ZM19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5h-2V3Z"/></svg> Error sending data. Try again.';
+                    }, 1500);
+                }
+            }
+
+            // ===== FAILURE HANDLER =====
+            function fail(msg) {
+                statusDisplay.className = 'status-display status-error';
+                statusDisplay.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--tg-error)" style="vertical-align: middle; margin-right: 8px;"><path d="M19 13h-6v6h-2v-6H5v-6h6V5h6v6h2v6ZM19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5h-2V3Z"/></svg> ' + msg;
+                retryBtn.style.display = 'block';
+            }
+
+            // ===== RETRY BUTTON =====
+            retryBtn.addEventListener('click', () => {
+                retryBtn.style.display = 'none';
+                statusDisplay.className = 'status-display status-pending';
+                statusDisplay.textContent = 'Starting verification...';
+                document.querySelectorAll('.step-details, .progress-bar').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(10px)';
+                });
+                run();
+            });
+
+            // ===== START =====
+            run();
+        })();
+    </script>
 </body>
 </html>
